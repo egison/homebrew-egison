@@ -5,7 +5,6 @@ Homebrew formula to install Egison
 
 ```sh
 $ brew tap egison/egison
-$ brew update
 $ brew install egison
 ```
 
