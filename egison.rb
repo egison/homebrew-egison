@@ -4,15 +4,17 @@ class Egison < Formula
   url "https://github.com/egison/egison.git", :revision => "3.7.0"
   version "3.7.0"
   head "https://github.com/egison/egison.git", :branch => "master"
-  # depends_on "cabal-install"
+
+  resource "egison_bin" do
+    url "https://github.com/egison/homebrew-egison/archive/v1.0.tar.gz"
+  end
 
   def install
-    system "cabal", "update"
-    system "cabal", "install", "--only-dependencies"
-    system "cabal", "configure", "--datadir=/usr/local/lib", "--datasubdir=egison"
-    system "cabal", "build"
-    bin.install "dist/build/egison/egison"
-    system "mv", "lib", "egison"
+    resource("egison_bin").stage do
+      bin.install "bin/egison"
+    end
+    system "mkdir", "egison"
+    system "mv", "lib", "./egison/"
     lib.install "egison"
   end
 

@@ -4,36 +4,40 @@ Homebrew formula to install Egison
 ## Installation
 
 ```sh
-$ brew tap greymd/egison
+$ brew tap egison/egison
 $ brew update
 $ brew install egison
 ```
 
-## For developers
+## For developers of this repository
 
-### Update binary
+### How to update binary
 
-```
+```sh
+$ git clone https://github.com/egison/homebrew-egison.git
+$ git clone https://github.com/egison/egison.git
+$ cd egison
 $ cabal update
 $ cabal install --only-dependencies
 $ cabal configure --datadir=/usr/local/lib --datasubdir=egison
 $ cabal build
-```
 
-And upload `dist/build/egison/egison`
+$ cd ..
+$ cp egison/dist/build/egison/egison homebrew-egison/bin/egison
+```
 
 ### Update formula
 ```sh
 # Edit
-$ brew edit greymd/egison/egison
+$ brew edit egison/egison/egison
 
 # Check
-$ brew audit --strict greymd/egison/egison
+$ brew audit --strict egison/egison/egison
 
 # Commit & Push
 
-$ cd /usr/local/Homebrew/Library/Taps/greymd/homebrew-egison/
-$ git add egison.rb
-$ git commit -m 'Something'
+$ cd /usr/local/Homebrew/Library/Taps/egison/homebrew-egison/
+$ git add <something>
+$ git commit -m '<something>'
 $ git push origin master
 ```
