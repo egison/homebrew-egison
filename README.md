@@ -8,11 +8,21 @@ $ brew tap egison/egison
 $ brew install egison
 ```
 
+### Uninstallation
+
+```sh
+$ brew remove egison
+$ brew untap egison/egison
+```
+
+* * *
+
 ## For developers of this repository
 
 ### How to update binary
 
 ```sh
+# Build executable binary.
 $ git clone https://github.com/egison/homebrew-egison.git
 $ git clone https://github.com/egison/egison.git
 $ cd egison
@@ -21,8 +31,14 @@ $ cabal install --only-dependencies
 $ cabal configure --datadir=/usr/local/lib --datasubdir=egison
 $ cabal build
 
-$ cd ..
-$ cp egison/dist/build/egison/egison homebrew-egison/bin/egison
+# Compress binary.
+$ cp dist/build/egison/egison
+$ zip egison_darwin_amd64.zip egison
+$ tar -zcvf egison_darwin_amd64.tar.gz egison
+
+# Upload egison_darwin_amd64.zip
+# and
+# egison_darwin_amd64.tar.gz to the GitHub Releases
 ```
 
 ### Update formula

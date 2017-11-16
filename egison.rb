@@ -1,12 +1,12 @@
 class Egison < Formula
   desc "A purely functional programming language with non-linear pattern-matching against non-free data types"
   homepage "https://www.egison.org/"
-  url "https://github.com/egison/egison.git", :revision => "3.7.0"
-  version "3.7.0"
+  url "https://github.com/egison/egison.git", :tag => "3.7.0"
   head "https://github.com/egison/egison.git", :branch => "master"
 
   resource "egison_bin" do
-    url "https://github.com/egison/homebrew-egison/archive/v1.0.tar.gz"
+    url "https://github.com/egison/homebrew-egison/releases/download/v3.7.0/egison_darwin_amd64.zip"
+    sha256 "11e6a76ca3bec4b6e9a1f2c37fd0bee66e6a01b426f17ca942e7f71ff9b2c9ec"
   end
 
   def install
