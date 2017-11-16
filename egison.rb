@@ -11,7 +11,7 @@ class Egison < Formula
 
   def install
     resource("egison_bin").stage do
-      bin.install "bin/egison"
+      bin.install "egison"
     end
     system "mkdir", "egison"
     system "mv", "lib", "./egison/"
