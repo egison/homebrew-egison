@@ -1,0 +1,18 @@
+language: generic
+
+matrix:
+    include:
+        # - os: linux
+        - os: osx
+
+before_install:
+    #    - if [ $TRAVIS_OS_NAME = osx ]; then rvm get head; fi
+    - if [ $TRAVIS_OS_NAME = osx ]; then brew install jq cabal-install; fi
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install jq cabal-install ghc; fi
+
+install:
+    - true
+
+script:
+    - bash -x release.sh init
+    - travis_wait 40 bash -x release.sh bump
