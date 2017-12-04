@@ -9,20 +9,20 @@
 #  * GITHUB_AUTH      -- Given by TravisCI's settings screen.
 #                        Auth token for GitHub Rest API.
 # ===================================
-set -ue
+set -xue
 
-FNAME=$(echo "egison_$(uname)_$(uname -m)" | tr '[:upper:]' '[:lower:]' | tr -dc 'a-z0-9._')
-THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+readonly FNAME=$(echo "egison_$(uname)_$(uname -m)" | tr '[:upper:]' '[:lower:]' | tr -dc 'a-z0-9._')
+readonly THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 LATEST_VERSION=
 CURRENT_VERSION=
-TARGET_BRANCH="master"
-BUILDER_REPO="egison/homebrew-egison"
-BUILDER_REPO_NAME=${BUILDER_REPO##*/}
-BUILD_REPO="egison/egison"
-RELEASE_TARBALL="${TRAVIS_BUILD_DIR:-$THIS_DIR}/${FNAME}.tar.gz"
+RELEASE_ARCHIVE=
+readonly TARGET_BRANCH="master"
+readonly BUILDER_REPO="egison/homebrew-egison"
+readonly BUILDER_REPO_NAME=${BUILDER_REPO##*/}
+readonly BUILD_REPO="egison/egison"
 ## User-Agent starts with Travis is required (https://github.com/travis-ci/travis-ci/issues/5649)
-COMMON_HEADER=("-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
-RELEASE_API_URL="https://api.github.com/repos/${BUILDER_REPO}/releases"
+readonly COMMON_HEADER=("-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
+readonly RELEASE_API_URL="https://api.github.com/repos/${BUILDER_REPO}/releases"
 
 # Initialize SSH keys
 init () {
@@ -34,16 +34,10 @@ init () {
 }
 
 get_version () {
-  git clone -b "${TARGET_BRANCH}" "git@github.com:${BUILDER_REPO}.git" "${THIS_DIR}/${BUILDER_REPO_NAME}"
-  cd "${THIS_DIR}/${BUILDER_REPO_NAME}"
-  curl -f -v -H "User-Agent: Travis/1.0" \
-       -H "Authorization: token $GITHUB_AUTH" \
-       -L "https://api.github.com/repos/${BUILD_REPO}/releases/latest" > "./latest.json"
-  LATEST_VERSION=$(cat "./latest.json" | jq -r .tag_name | tr -d '\n')
-  CURRENT_VERSION=$(cat "./VERSION" | tr -d '\n')
-  rm "./latest.json"
-  rm -rf "${THIS_DIR}/${BUILDER_REPO_NAME}"
-  cd "${THIS_DIR}"
+  LATEST_VERSION=$(get_latest_release "${BUILD_REPO}")
+  CURRENT_VERSION=$(get_latest_release "${BUILDER_REPO}")
+  RELEASE_ARCHIVE="${TRAVIS_BUILD_DIR:-$THIS_DIR}/${FNAME}_${LATEST_VERSION}.zip"
+  readonly LATEST_VERSION CURRENT_VERSION RELEASE_ARCHIVE
 }
 
 bump () {
@@ -56,8 +50,8 @@ bump () {
   fi
   # Build tarball
   ( build )
-  if [[ ! -s "${RELEASE_TARBALL}" ]];then
-    echo "Failed to create '${RELEASE_TARBALL}'"
+  if [[ ! -s "${RELEASE_ARCHIVE}" ]];then
+    echo "Failed to create '${RELEASE_ARCHIVE}'"
     exit 1
   fi
 
@@ -68,10 +62,10 @@ bump () {
   cd "${THIS_DIR}/${BUILDER_REPO_NAME}"
 
   # Edit files
-  _sha256hash=$(shasum -a 256 "${RELEASE_TARBALL}" | perl -anle 'print $F[0]')
+  _sha256hash=$(shasum -a 256 "${RELEASE_ARCHIVE}" | perl -anle 'print $F[0]')
   perl -i -pe 's/VERSION = ".*"/VERSION = "'${LATEST_VERSION}'"/' "./egison.rb"
   perl -i -pe 's/sha256 ".*"/sha256 "'${_sha256hash}'"/' "./egison.rb"
-  echo "$LATEST_VERSION" > "./VERSION"
+  echo "${LATEST_VERSION}-$(date +%s)" > "./VERSION"
 
   # Crete versions and make changes to GitHub
   git add "./VERSION" "./egison.rb"
@@ -82,7 +76,7 @@ bump () {
   ## If there is already same name of the release, delete it.
   if [[ "${_release_id}" != "" ]]; then
     delete_release "${_release_id}" || exit 1
-    git push :"${LATEST_VERSION}"  || true
+    git push origin :"${LATEST_VERSION}"  || true
     git tag -d "${LATEST_VERSION}" || true
   fi
 
@@ -92,7 +86,7 @@ bump () {
   # Create new release
   _new_release_info=$(create_release "${LATEST_VERSION}" "${TARGET_BRANCH}")
   _upload_url=$(echo "${_new_release_info}" | jq -r .upload_url | perl -pe 's/{.*}//')
-  upload_assets "${_upload_url}" "${RELEASE_TARBALL}"
+  upload_assets "${_upload_url}" "${RELEASE_ARCHIVE}"
 }
 
 build () {
@@ -108,10 +102,14 @@ build () {
   mkdir -p "${_workdir}/lib/egison"
   cp "${THIS_DIR}/egison/dist/build/egison/egison" "${_workdir}/bin"
   cp -rf "${THIS_DIR}/egison/lib" "${_workdir}/lib/egison"
-  tar -zcvf "${RELEASE_TARBALL}" \
-    -C "${THIS_DIR}/egison/${_workdir}" bin lib
+  (
+    cd "${THIS_DIR}/egison/${_workdir}"
+    zip -r "${RELEASE_ARCHIVE}" bin lib
+  )
+  # tar -zcvf "${RELEASE_ARCHIVE}" \
+  #   -C "${THIS_DIR}/egison/${_workdir}" bin lib
   rm -rf ${THIS_DIR}/egison
-  echo "${RELEASE_TARBALL} is successfully created." >&2
+  echo "${RELEASE_ARCHIVE} is successfully created." >&2
 }
 
 get_release_list () {
@@ -149,6 +147,18 @@ upload_assets () {
     -H "Content-Type: $(file -b --mime-type "${_file}")" \
     --data-binary @"${_file}" \
     "${_url}?name=$(basename ${_file})"
+}
+
+get_latest_release () {
+  local _repo="$1"
+  curl -f -v -H "User-Agent: Travis/1.0" \
+       -H "Authorization: token $GITHUB_AUTH" \
+       -L "https://api.github.com/repos/${_repo}/releases/latest" > "./latest.json"
+  if [[ $? != 0 ]] || [[ ! -s "./latest.json" ]]; then
+    exit 1
+  fi
+  cat "./latest.json" | jq -r .tag_name | tr -d '\n'
+  rm "./latest.json"
 }
 
 main () {
