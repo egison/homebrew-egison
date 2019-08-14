@@ -21,7 +21,7 @@ readonly BUILDER_REPO="egison/homebrew-egison"
 readonly BUILDER_REPO_NAME=${BUILDER_REPO##*/}
 readonly BUILD_REPO="egison/egison"
 ## User-Agent starts with Travis is required (https://github.com/travis-ci/travis-ci/issues/5649)
-readonly COMMON_HEADER=("-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
+readonly COMMON_HEADER=("--retry" "3" "-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
 readonly RELEASE_API_URL="https://api.github.com/repos/${BUILDER_REPO}/releases"
 
 # Initialize SSH keys
@@ -113,7 +113,7 @@ build () {
 }
 
 get_release_list () {
-  curl -k -v -H "User-Agent: Travis/1.0" \
+  curl -k --retry 3 -v -H "User-Agent: Travis/1.0" \
     -H "Authorization: token $GITHUB_AUTH" \
     "${RELEASE_API_URL}"
 }
@@ -151,7 +151,7 @@ upload_assets () {
 
 get_latest_release () {
   local _repo="$1"
-  curl -k -f -v -H "User-Agent: Travis/1.0" \
+  curl -k --retry 3 -f -v -H "User-Agent: Travis/1.0" \
        -H "Authorization: token $GITHUB_AUTH" \
        -L "https://api.github.com/repos/${_repo}/releases/latest" > "./latest.json"
   if [[ $? != 0 ]] || [[ ! -s "./latest.json" ]]; then
