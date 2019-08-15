@@ -1,10 +1,10 @@
 class Egison < Formula
-  VERSION = "3.8.2"
+  VERSION = "3.9.0"
   version VERSION
   desc "A purely functional programming language with non-linear pattern-matching against non-free data types"
   homepage "https://www.egison.org/"
   url "https://github.com/egison/homebrew-egison/releases/download/#{VERSION}/egison_darwin_x86_64_#{VERSION}.zip"
-  sha256 "22647bf77967805911f7f17219fb8d09a67cca569cb01e0e48aafc2620cd380e"
+  sha256 "233956a688e413a4eb3a4743881a7f5e18c6f40af48c9d9b1eb03637e1fc9f25"
 
   def install
     bin.install "bin/egison"
