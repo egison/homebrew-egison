@@ -90,17 +90,21 @@ bump () {
 }
 
 build () {
+  local _exefile
   local _workdir="work-$RANDOM"
   git clone -b "${LATEST_VERSION}" \
     "https://github.com/${BUILD_REPO}.git" "${THIS_DIR}/egison"
   cd "${THIS_DIR}/egison"
-  cabal update
-  cabal install --only-dependencies
-  cabal configure --datadir=/usr/local/lib --datasubdir=egison
-  cabal build
+  cabal v2-update
+  cabal v2-install --only-dependencies --lib
+  cabal v2-configure --datadir=/usr/local/lib --datasubdir=egison
+  cabal v2-build
   mkdir -p "${_workdir}/bin"
   mkdir -p "${_workdir}/lib/egison"
-  cp "${THIS_DIR}/egison/dist/build/egison/egison" "${_workdir}/bin"
+  _exefile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'egison')"
+  ## Exit the function if file is not executable file.
+  file "$_exefile" | grep -q 'executable' || return 1
+  cp "${_exefile}" "${_workdir}/bin"
   cp -rf "${THIS_DIR}/egison/lib" "${_workdir}/lib/egison"
   (
     cd "${THIS_DIR}/egison/${_workdir}"
