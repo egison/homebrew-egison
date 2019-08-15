@@ -26,10 +26,10 @@ $ brew untap egison/egison
 $ git clone https://github.com/egison/homebrew-egison.git
 $ git clone https://github.com/egison/egison.git
 $ cd egison
-$ cabal update
-$ cabal install --only-dependencies
-$ cabal configure --datadir=/usr/local/lib --datasubdir=egison
-$ cabal build
+$ cabal v2-update
+$ cabal v2-install --only-dependencies --lib
+$ cabal v2-configure --datadir=/usr/local/lib --datasubdir=egison
+$ cabal v2-build
 
 # Compress binary.
 $ cp dist/build/egison/egison
