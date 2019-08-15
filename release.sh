@@ -21,7 +21,7 @@ readonly BUILDER_REPO="egison/homebrew-egison"
 readonly BUILDER_REPO_NAME=${BUILDER_REPO##*/}
 readonly BUILD_REPO="egison/egison"
 ## User-Agent starts with Travis is required (https://github.com/travis-ci/travis-ci/issues/5649)
-readonly COMMON_HEADER=("--retry" "3" "-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
+readonly COMMON_HEADER=("-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
 readonly RELEASE_API_URL="https://api.github.com/repos/${BUILDER_REPO}/releases"
 
 # Initialize SSH keys
@@ -90,17 +90,21 @@ bump () {
 }
 
 build () {
+  local _exefile
   local _workdir="work-$RANDOM"
   git clone -b "${LATEST_VERSION}" \
     "https://github.com/${BUILD_REPO}.git" "${THIS_DIR}/egison"
   cd "${THIS_DIR}/egison"
-  cabal update
-  cabal install --only-dependencies
-  cabal configure --datadir=/usr/local/lib --datasubdir=egison
-  cabal build
+  cabal v2-update
+  cabal v2-install --only-dependencies --lib
+  cabal v2-configure --datadir=/usr/local/lib --datasubdir=egison
+  cabal v2-build
   mkdir -p "${_workdir}/bin"
   mkdir -p "${_workdir}/lib/egison"
-  cp "${THIS_DIR}/egison/dist/build/egison/egison" "${_workdir}/bin"
+  _exefile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'egison')"
+  ## Exit the function if file is not executable file.
+  file "$_exefile" | grep -q 'executable' || return 1
+  cp "${_exefile}" "${_workdir}/bin"
   cp -rf "${THIS_DIR}/egison/lib" "${_workdir}/lib/egison"
   (
     cd "${THIS_DIR}/egison/${_workdir}"
@@ -113,21 +117,21 @@ build () {
 }
 
 get_release_list () {
-  curl -k --retry 3 -v -H "User-Agent: Travis/1.0" \
+  curl -v -H "User-Agent: Travis/1.0" \
     -H "Authorization: token $GITHUB_AUTH" \
     "${RELEASE_API_URL}"
 }
 
 delete_release () {
   local _id="$1"
-  curl -k "${COMMON_HEADER[@]}" \
+  curl "${COMMON_HEADER[@]}" \
   -X DELETE "${RELEASE_API_URL}/${_id}"
 }
 
 create_release () {
   local _tag="$1" ;shift
   local _branch="$1" ;shift
-  curl -k "${COMMON_HEADER[@]}" \
+  curl "${COMMON_HEADER[@]}" \
     -X POST \
     -d '{
       "tag_name": "'${_tag}'",
@@ -143,7 +147,7 @@ create_release () {
 upload_assets () {
   local _url="$1"; shift
   local _file="$1"; shift
-  curl -k "${COMMON_HEADER[@]}" \
+  curl "${COMMON_HEADER[@]}" \
     -H "Content-Type: $(file -b --mime-type "${_file}")" \
     --data-binary @"${_file}" \
     "${_url}?name=$(basename ${_file})"
@@ -151,7 +155,7 @@ upload_assets () {
 
 get_latest_release () {
   local _repo="$1"
-  curl -k --retry 3 -f -v -H "User-Agent: Travis/1.0" \
+  curl -f -v -H "User-Agent: Travis/1.0" \
        -H "Authorization: token $GITHUB_AUTH" \
        -L "https://api.github.com/repos/${_repo}/releases/latest" > "./latest.json"
   if [[ $? != 0 ]] || [[ ! -s "./latest.json" ]]; then
