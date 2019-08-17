@@ -29,6 +29,7 @@ $ cabal v2-install --only-dependencies --lib
 $ cabal v2-configure
 $ _pathsfile="$(find "./dist-newstyle" -type f -name 'Paths_egison.hs' | head -n 1)"
 $ perl -i -pe 's@datadir[ ]*=[ ]*.*$@datadir = "/usr/local/lib/egison"@' "$_pathsfile"
+$ cp "$_pathsfile" ./hs-src
 $ cabal v2-build
 $ $(find "./dist-newstyle" -type f -name 'egison')
 ```
