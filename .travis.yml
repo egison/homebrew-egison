@@ -8,7 +8,7 @@ before_install:
     # Avoid old ruby version. Ref: https://github.com/travis-ci/travis.rb/issues/586
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo gem uninstall travis ;fi
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo gem install travis -v 1.8.8 --no-rdoc --no-ri ;fi
-    - if [ $TRAVIS_OS_NAME = osx ]; then brew install jq cabal-install;fi
+    - if [ $TRAVIS_OS_NAME = osx ]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install jq cabal-install;fi
 
 install:
     - true
