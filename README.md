@@ -24,13 +24,13 @@ $ brew untap egison/egison
 ```sh
 $ git clone https://github.com/egison/egison.git
 $ cd egison
-$ cabal v2-update
-$ cabal v2-install --only-dependencies --lib
-$ cabal v2-configure
+$ cabal update
+$ cabal install --only-dependencies --lib
+$ cabal configure
 $ _pathsfile="$(find "./dist-newstyle" -type f -name 'Paths_egison.hs' | head -n 1)"
 $ perl -i -pe 's@datadir[ ]*=[ ]*.*$@datadir = "/usr/local/lib/egison"@' "$_pathsfile"
 $ cp "$_pathsfile" ./hs-src
-$ cabal v2-build
+$ cabal build
 $ $(find "./dist-newstyle" -type f -name 'egison')
 ```
 
