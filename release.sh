@@ -42,6 +42,7 @@ get_version () {
 }
 
 bump () {
+  echo "start bump"
   local _sha256hash
   local _release_id
   local _new_release_info
