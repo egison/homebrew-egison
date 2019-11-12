@@ -103,9 +103,11 @@ build () {
   perl -i -pe 's@datadir[ ]*=[ ]*.*$@datadir = "/usr/local/lib/egison"@' "$_pathsfile"
   cp "$_pathsfile" "${THIS_DIR}/egison/hs-src"
   cabal build
+  echo "egison is succefully build." >&2
   mkdir -p "${_workdir}/bin"
   mkdir -p "${_workdir}/lib/egison"
   _exefile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'egison')"
+  echo "Egison command is succefully find in ${_exefile}." >&2
   ## Exit the function if file is not executable file.
   file "$_exefile" | grep -q 'executable' || return 1
   cp "${_exefile}" "${_workdir}/bin"
