@@ -95,14 +95,14 @@ build () {
   git clone -b "${LATEST_VERSION}" \
     "https://github.com/${BUILD_REPO}.git" "${THIS_DIR}/egison"
   cd "${THIS_DIR}/egison"
-  cabal v2-update
-  cabal v2-install --only-dependencies --lib
-  cabal v2-configure
-  cabal v2-build
+  cabal update
+  cabal install --only-dependencies --lib
+  cabal configure
+  cabal build
   _pathsfile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'Paths_egison.hs' | head -n 1)"
   perl -i -pe 's@datadir[ ]*=[ ]*.*$@datadir = "/usr/local/lib/egison"@' "$_pathsfile"
   cp "$_pathsfile" "${THIS_DIR}/egison/hs-src"
-  cabal v2-build
+  cabal build
   mkdir -p "${_workdir}/bin"
   mkdir -p "${_workdir}/lib/egison"
   _exefile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'egison')"
