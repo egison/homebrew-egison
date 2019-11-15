@@ -16,5 +16,5 @@ install:
     - cabal --version
 
 script:
-    - bash -x release.sh init
-    - travis_wait 40 bash -x release.sh bump
+    - bash release.sh init
+    - bash -x release.sh bump
