@@ -4,6 +4,7 @@
 # Automated build script for Egison
 # Required Environment Variables:
 #  * TRAVIS_BUILD_DIR -- Given by TravisCI
+#  * TRAVIS_REPO_SLUG -- Givven by TravisCI
 #  * ID_RSA           -- Given by TravisCI's settings screen
 #                        FYI: https://travis-ci.org/egison/homebrew-egison/settings
 #  * GITHUB_AUTH      -- Given by TravisCI's settings screen.
@@ -17,7 +18,7 @@ LATEST_VERSION=
 CURRENT_VERSION=
 RELEASE_ARCHIVE=
 readonly TARGET_BRANCH="master"
-readonly BUILDER_REPO="greymd/homebrew-egison"
+readonly BUILDER_REPO="$TRAVIS_REPO_SLUG" # egison/homebrew-egison
 readonly BUILDER_REPO_NAME=${BUILDER_REPO##*/}
 readonly BUILD_REPO="egison/egison"
 ## User-Agent starts with Travis is required (https://github.com/travis-ci/travis-ci/issues/5649)
