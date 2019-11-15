@@ -4,12 +4,13 @@
 # Automated build script for Egison
 # Required Environment Variables:
 #  * TRAVIS_BUILD_DIR -- Given by TravisCI
+#  * TRAVIS_REPO_SLUG -- Givven by TravisCI
 #  * ID_RSA           -- Given by TravisCI's settings screen
 #                        FYI: https://travis-ci.org/egison/homebrew-egison/settings
 #  * GITHUB_AUTH      -- Given by TravisCI's settings screen.
 #                        Auth token for GitHub Rest API.
 # ===================================
-set -xue
+set -e
 
 readonly FNAME=$(echo "egison_$(uname)_$(uname -m)" | tr '[:upper:]' '[:lower:]' | tr -dc 'a-z0-9._')
 readonly THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -17,21 +18,21 @@ LATEST_VERSION=
 CURRENT_VERSION=
 RELEASE_ARCHIVE=
 readonly TARGET_BRANCH="master"
-readonly BUILDER_REPO="egison/homebrew-egison"
+readonly BUILDER_REPO="$TRAVIS_REPO_SLUG" # egison/homebrew-egison
 readonly BUILDER_REPO_NAME=${BUILDER_REPO##*/}
 readonly BUILD_REPO="egison/egison"
 ## User-Agent starts with Travis is required (https://github.com/travis-ci/travis-ci/issues/5649)
-readonly COMMON_HEADER=("-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
+readonly COMMON_HEADER=("--retry" "3" "-H" "User-Agent: Travis/1.0" "-H" "Authorization: token $GITHUB_AUTH" "-H" "Accept: application/vnd.github.v3+json" "-L" "-f")
 readonly RELEASE_API_URL="https://api.github.com/repos/${BUILDER_REPO}/releases"
 
 # Initialize SSH keys
 init () {
   echo "start init"
-  printf "Host github.com\n\tStrictHostKeyChecking no\n" >> $HOME/.ssh/config
-  echo "${ID_RSA}" | base64 --decode | gzip -d > $HOME/.ssh/id_rsa
-  chmod 600 $HOME/.ssh/id_rsa
+  printf "Host github.com\n\tStrictHostKeyChecking no\n" >> "$HOME"/.ssh/config
+  echo "${ID_RSA}" | base64 --decode | gzip -d > "$HOME"/.ssh/id_rsa
+  chmod 600 "$HOME"/.ssh/id_rsa
   git config --global user.name "greymd"
-  git config --global user.email "greengregson@gmail.com"
+  git config --global user.email "yamadagrep@gmail.com"
 }
 
 get_version () {
@@ -65,8 +66,8 @@ bump () {
 
   # Edit files
   _sha256hash=$(shasum -a 256 "${RELEASE_ARCHIVE}" | perl -anle 'print $F[0]')
-  perl -i -pe 's/VERSION = ".*"/VERSION = "'${LATEST_VERSION}'"/' "./egison.rb"
-  perl -i -pe 's/sha256 ".*"/sha256 "'${_sha256hash}'"/' "./egison.rb"
+  perl -i -pe 's/VERSION = ".*"/VERSION = "'"${LATEST_VERSION}"'"/' "./egison.rb"
+  perl -i -pe 's/sha256 ".*"/sha256 "'"${_sha256hash}"'"/' "./egison.rb"
   echo "${LATEST_VERSION}-$(date +%s)" > "./VERSION"
 
   # Crete versions and make changes to GitHub
@@ -74,7 +75,7 @@ bump () {
   git commit -m "[skip ci] Bump version to ${LATEST_VERSION}"
 
   ## Clean tags just in case
-  _release_id=$(get_release_list | jq '.[] | select(.tag_name == "'${LATEST_VERSION}'") | .id')
+  _release_id=$(get_release_list | jq '.[] | select(.tag_name == "'"${LATEST_VERSION}"'") | .id')
   ## If there is already same name of the release, delete it.
   if [[ "${_release_id}" != "" ]]; then
     delete_release "${_release_id}" || exit 1
@@ -98,19 +99,29 @@ build () {
   git clone -b "${LATEST_VERSION}" \
     "https://github.com/${BUILD_REPO}.git" "${THIS_DIR}/egison"
   cd "${THIS_DIR}/egison"
-  cabal v2-update
-  cabal v2-install --only-dependencies --lib
-  cabal v2-configure
-  cabal v2-build
-  _pathsfile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'Paths_egison.hs' | head -n 1)"
-  perl -i -pe 's@datadir[ ]*=[ ]*.*$@datadir = "/usr/local/lib/egison"@' "$_pathsfile"
-  cp "$_pathsfile" "${THIS_DIR}/egison/hs-src"
-  cabal build
-  echo "egison is succefully build." >&2
+
+  if cabal v2-update --help &> /dev/null ;then ## If cabal has v2-* sub-commands (more than 2.4.1)
+    cabal v2-update
+    cabal v2-install --only-dependencies --lib
+    cabal v2-configure
+    cabal v2-build
+    _pathsfile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'Paths_egison.hs' | head -n 1)"
+    perl -i -pe 's@datadir[ ]*=[ ]*.*$@datadir = "/usr/local/lib/egison"@' "$_pathsfile"
+    cp "$_pathsfile" "${THIS_DIR}/egison/hs-src"
+    cabal v2-build
+    echo "egison is succefully build." >&2
+    _exefile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'egison')"
+    echo "Egison command is succefully found in ${_exefile}." >&2
+  else
+    cabal update
+    cabal install --only-dependencies
+    cabal configure --datadir=/usr/local/lib --datasubdir=egison
+    cabal build
+    _exefile="${THIS_DIR}/egison/dist/build/egison/egison"
+  fi
   mkdir -p "${_workdir}/bin"
   mkdir -p "${_workdir}/lib/egison"
-  _exefile="$(find "${THIS_DIR}/egison/dist-newstyle" -type f -name 'egison')"
-  echo "Egison command is succefully find in ${_exefile}." >&2
+
   ## Exit the function if file is not executable file.
   file "$_exefile" | grep -q 'executable' || return 1
   cp "${_exefile}" "${_workdir}/bin"
@@ -121,7 +132,7 @@ build () {
   )
   # tar -zcvf "${RELEASE_ARCHIVE}" \
   #   -C "${THIS_DIR}/egison/${_workdir}" bin lib
-  rm -rf ${THIS_DIR}/egison
+  rm -rf "${THIS_DIR}"/egison
   echo "${RELEASE_ARCHIVE} is successfully created." >&2
 }
 
@@ -143,10 +154,10 @@ create_release () {
   curl "${COMMON_HEADER[@]}" \
     -X POST \
     -d '{
-      "tag_name": "'${_tag}'",
-      "target_commitish": "'${_branch}'",
-      "name": "'${_tag}'",
-      "body": "Bump version to '${_tag}'",
+      "tag_name": "'"${_tag}"'",
+      "target_commitish": "'"${_branch}"'",
+      "name": "'"${_tag}"'",
+      "body": "Bump version to '"${_tag}"'",
       "draft": false,
       "prerelease": false
     }' \
@@ -159,19 +170,22 @@ upload_assets () {
   curl "${COMMON_HEADER[@]}" \
     -H "Content-Type: $(file -b --mime-type "${_file}")" \
     --data-binary @"${_file}" \
-    "${_url}?name=$(basename ${_file})"
+    "${_url}?name=$(basename "${_file}")"
 }
 
 get_latest_release () {
   local _repo="$1"
-  curl -f -v -H "User-Agent: Travis/1.0" \
+  echo "get_latest_release start $_repo" >&2
+  curl --retry 3 -f -v -H "User-Agent: Travis/1.0" \
        -H "Authorization: token $GITHUB_AUTH" \
        -L "https://api.github.com/repos/${_repo}/releases/latest" > "./latest.json"
-  if [[ $? != 0 ]] || [[ ! -s "./latest.json" ]]; then
+  _ret=$?
+  if [[ $_ret != 0 ]] || [[ ! -s "./latest.json" ]]; then
     exit 1
   fi
-  cat "./latest.json" | jq -r .tag_name | tr -d '\n'
+  jq -r .tag_name < "./latest.json" | tr -d '\n'
   rm "./latest.json"
+  echo "get_latest_release end $_repo" >&2
 }
 
 main () {
