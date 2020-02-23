@@ -6,8 +6,9 @@ matrix:
 
 before_install:
     # Avoid old ruby version. Ref: https://github.com/travis-ci/travis.rb/issues/586
+    - if [ $TRAVIS_OS_NAME = osx ]; then ruby --version ;fi
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo gem uninstall travis ;fi
-    - if [ $TRAVIS_OS_NAME = osx ]; then sudo gem install travis -v 1.8.8 --no-rdoc --no-ri ;fi
+    - if [ $TRAVIS_OS_NAME = osx ]; then sudo gem install travis -v 1.8.8 ;fi
     - export HOMEBREW_NO_AUTO_UPDATE=1
     - if [ $TRAVIS_OS_NAME = osx ]; then brew install ghc jq curl ;fi
     - curl --retry 3 -L https://downloads.haskell.org/~cabal/cabal-install-latest/cabal-install-3.0.0.0-x86_64-apple-darwin17.7.0.tar.xz | tar x && mv ./cabal /usr/local/bin/
