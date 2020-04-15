@@ -11,7 +11,7 @@ before_install:
     - if [ $TRAVIS_OS_NAME = osx ]; then sudo gem install travis -v 1.8.8 ;fi
     - export HOMEBREW_NO_AUTO_UPDATE=1
     - if [ $TRAVIS_OS_NAME = osx ]; then brew install ghc jq curl ;fi
-    - curl --retry 3 -L https://downloads.haskell.org/~cabal/cabal-install-latest/cabal-install-3.0.0.0-x86_64-apple-darwin17.7.0.tar.xz | tar x && mv ./cabal /usr/local/bin/
+    - curl --retry 3 -L https://downloads.haskell.org/~cabal/cabal-install-3.0.0.0/cabal-install-3.0.0.0-x86_64-apple-darwin17.7.0.tar.xz | tar x && mv ./cabal /usr/local/bin/
 
 install:
     - cabal --version
