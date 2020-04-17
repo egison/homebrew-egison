@@ -1,5 +1,5 @@
 class EgisonTutorial < Formula
-  VERSION = "4.0.0"
+  VERSION = "3.10.3"
   version VERSION
   desc "A tutorial program for the Egison programming language"
   homepage "https://www.egison.org/"
