@@ -45,16 +45,20 @@ $ file $(find "./dist-newstyle" -type f -name 'egison')
 
 ```sh
 $ git clone https://github.com/egison/egison-tutorial.git
+$ TAG="$(awk '/Version:/{print $NF}' egison-tutorial.cabal )"
 $ cd egison-tutorial
 $ cabal v2-update
+$ cabal v2-install
 $ cabal v2-configure
 $ cabal v2-build
 $ mkdir bin
-$ cp $(find dist-newstyle/ -type f  -name egison-tutorial) ./bin/egison-tutorial-impl
-$ printf '%s\n%s\n' '#!/bin/sh' 'egison_datadir=/usr/local/lib/egison egison-tutorial-impl "$@"' > ./bin/egison-tutorial
+$ cp $(find dist-newstyle/ -type f  -name egison-tutorial | head -n 1) ./bin/egison-tutorial-impl
+$ printf '%s\n%s\n' '#!/bin/sh' 'egison_datadir=/usr/local/lib/egison-tutorial egison-tutorial-impl "$@"' > ./bin/egison-tutorial
 $ chmod +x ./bin/egison-tutorial
-$ file_name="egison-tutorial_$(uname | sed 's/./\L&/')_$(uname -m)_$(awk '/Version:/{print $NF}' egison-tutorial.cabal ).zip"
-$ zip -r "$file_name" bin
+$ file_name="egison-tutorial_$(uname | sed 's/./\L&/')_$(uname -m)_$TAG.zip"
+$ git clone --branch $TAG https://github.com/egison/egison.git
+$ cp -rf ./egison/lib ./lib
+$ zip -r "$file_name" bin lib
 ### => get zip file
 $ shasum -a 256 "$file_name"
 ### => get hash

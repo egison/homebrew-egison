@@ -1,0 +1,38 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  schedule:
+    - cron:  '0 0 * * *'
+  push:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    if: "! contains(toJSON(github.event.commits.*.msg), '[skip-ci]')"
+    # The type of runner that the job will run on
+    runs-on: macos-10.15
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    - name: Install cabal
+      run: |
+        curl --retry 3 -L https://downloads.haskell.org/~cabal/cabal-install-3.0.0.0/cabal-install-3.0.0.0-x86_64-apple-darwin17.7.0.tar.xz | tar x && mv ./cabal /usr/local/bin/
+        cabal --version
+        brew install ghc jq
+
+    - name: Deploy
+      env:
+        ID_RSA: ${{secrets.ID_RSA}}
+        API_AUTH: ${{secrets.API_AUTH}}
+      run: |
+        bash ./release.sh init
+        bash -x ./release.sh bump && bash -x ./release_egison-tutorial.sh bump
