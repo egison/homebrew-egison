@@ -8,7 +8,6 @@ class Egison < Formula
 
   def install
     bin.install "bin/egison"
-    # bin.install "bin/egison-tutorial"
     lib.install "lib/egison"
   end
 
