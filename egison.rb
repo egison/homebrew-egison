@@ -4,7 +4,7 @@ class Egison < Formula
   desc "A purely functional programming language with non-linear pattern-matching against non-free data types"
   homepage "https://www.egison.org/"
   url "https://github.com/egison/homebrew-egison/releases/download/#{VERSION}/egison_darwin_x86_64_#{VERSION}.zip"
-  sha256 "89543cb1d78335344110f79c37bd1b9fba4b0098e50f56e415e12840e7624d12"
+  sha256 "506fad29c302f8fefa9deb2a9c812f110fc8cdd728608cc37797c51913c5d47f"
 
   def install
     bin.install "bin/egison"
