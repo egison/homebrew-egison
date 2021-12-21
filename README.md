@@ -11,7 +11,7 @@ $ brew install egison egison-tutorial
 
 ```sh
 $ brew tap egison/egison
-$ brew upgrade egison
+$ brew upgrade egison egison-tutorial
 ```
 
 ### Uninstallation
